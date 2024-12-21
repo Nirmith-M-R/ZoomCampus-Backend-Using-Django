@@ -54,7 +54,7 @@ def riderregistercheck(request):
         try:
             data = request.POST
             mail = data.get('mail')
-            data = SignUP.objects.get(mail=mail)
+            data = Rider.objects.get(mail=mail)
             if(mail == data.mail):
                 return JsonResponse({"Status":"Registered"}, status=200)                
         except:
@@ -68,8 +68,7 @@ def riderregister(request):
             mail = data.get('mail')
             seats = data.get('seats')
             regno = data.get('regno')
-            ob = Rider(mail=mail, seats=seats, regNo = regno)
-            ob.save()
+            ob = Rider.objects.create(mail=mail, seats=seats, regNo = regno)
             return JsonResponse({"Status":"Registration Done"}, status = 200)
         except:
             return JsonResponse({"Status":"Error"}, status=205)
@@ -85,8 +84,14 @@ def request_ride(request):
             mail = data.get("mail")
             passenger = SignUP.objects.get(mail=mail)
             passenger_route = passenger.route
-
+            print("HI")
             rider = ActiveUser.objects.all()
-
+            for i in range(len(rider)):
+                for j in range(len(passenger_route)-1,-1,-1):
+                    for n in range(len(rider[i].route)-1,-1,-1):
+                        if passenger_route[j].lower() == rider[i].route[n].lower():
+                            return JsonResponse({"status":"Rider Found", "name":rider[i].name, "gender":rider[i].gender, "phNo":rider[i].phNo, "Destination":passenger_route[j]},status=200)
+            print("Here")
+            return JsonResponse({"status":"Rider not found"},status=205)
         except:
-            pass
+            return JsonResponse({"status":"Rider not found"},status=205)

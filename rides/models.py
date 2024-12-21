@@ -24,3 +24,4 @@ class Rider(models.Model):
     mail = models.CharField(max_length=30, primary_key=True)
     seats = models.IntegerField()
     regNo = models.CharField(max_length=10)
+
