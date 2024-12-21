@@ -9,8 +9,9 @@ def signup(request):
         try:
             # Parse the incoming JSON data
             # print(request.body)
-            data = request.POST
-
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            # print(data)
             # Extract user details
             mail = data.get('mail')
             password = data.get('password')
@@ -23,9 +24,9 @@ def signup(request):
             # Validate mandatory fields
             if not (mail and password and name and phNo and gender and program):
                 return JsonResponse({'error': 'All fields except route are required.'}, status=400)
-
+            # print("here")
             # Create the user
-            user = SignUP.objects.create(
+            user = SignUP(
                 mail=mail,
                 password=password,
                 name=name,
@@ -34,9 +35,10 @@ def signup(request):
                 program=program,
                 route=route
             )
+            user.save()
 
             # Return success response
-            return JsonResponse({'success': f'User {user.name} added successfully!'}, status=201)
+            return JsonResponse({'success': f'User {user.name} added successfully!'}, status=200)
 
         except Exception as e:
             # Handle errors
@@ -51,9 +53,15 @@ def activeRider(request):
 @csrf_exempt
 def riderregistercheck(request):
     if request.method == "POST":
+        # print("hi")
         try:
-            data = request.POST
+            data = request.body.decode('utf-8')
+            # print(data)
+            data = json.loads(data)
+            # print("hello")
+            print(data)
             mail = data.get('mail')
+            # print(mail)
             data = Rider.objects.get(mail=mail)
             if(mail == data.mail):
                 return JsonResponse({"Status":"Registered"}, status=200)                

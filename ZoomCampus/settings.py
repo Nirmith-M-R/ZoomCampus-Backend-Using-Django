@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-we)0d92(tbib59o1$uw@hgo$*-f!1j=x3o!1r2tv)!u3lm15k8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.31.48","localhost"]
+ALLOWED_HOSTS = ["192.168.31.48","localhost", "ttt"]
 
 
 # Application definition
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rides'
+    'rides',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -48,6 +49,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware'
 ]
 
 ROOT_URLCONF = 'ZoomCampus.urls'
