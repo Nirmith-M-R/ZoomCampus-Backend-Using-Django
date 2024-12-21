@@ -1,7 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import SignUP,Rider,ActiveUser
+from .models import SignUP,Rider,ActiveUser,RiderAccept, RideStarted
 import json
+import datetime
 
 @csrf_exempt
 def signup(request):
@@ -13,12 +14,12 @@ def signup(request):
             data = json.loads(data)
             # print(data)
             # Extract user details
-            mail = data.get('mail')
-            password = data.get('password')
-            name = data.get('name')
-            phNo = data.get('phNo')
-            gender = data.get('gender')
-            program = data.get('program')
+            mail = data.get('mail').strip()
+            password = data.get('password').strip()
+            name = data.get('name').strip()
+            phNo = data.get('phNo').strip()
+            gender = data.get('gender').strip()
+            program = data.get('program').strip()
             route = data.get('route', [])  # Default to an empty list if not provided
 
             # Validate mandatory fields
@@ -47,8 +48,27 @@ def signup(request):
     # If the method is not POST
     return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)
 
-def activeRider(request):
-    mail = request.POST.get('mail')
+@csrf_exempt
+def login(request):
+    if request.method=="POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            mail = data.get("mail")
+            password = data.get("password")
+            user = SignUP.objects.get(mail=mail)
+            if(password==user.password):
+                return JsonResponse({"status":"Success"},status=200)
+        except:
+            return JsonResponse({"status":"Fail"},status=205)
+
+@csrf_exempt
+def activateRider(request):
+    data = request.body.decode('utf-8')
+    data = json.loads(data)
+    mail = data.get('mail')
+    ob = SignUP.objects.get(mail=mail)
+    ActiveUser.objects.create(mail=mail, name = ob.name,phNo = ob.phNo, gender=ob.gender, rating=ob.rating, route=ob.route,gate = data.get('gate'))
     
 @csrf_exempt
 def riderregistercheck(request):
@@ -92,14 +112,76 @@ def request_ride(request):
             mail = data.get("mail")
             passenger = SignUP.objects.get(mail=mail)
             passenger_route = passenger.route
-            print("HI")
             rider = ActiveUser.objects.all()
+
+            riders = []
+
             for i in range(len(rider)):
                 for j in range(len(passenger_route)-1,-1,-1):
                     for n in range(len(rider[i].route)-1,-1,-1):
                         if passenger_route[j].lower() == rider[i].route[n].lower():
-                            return JsonResponse({"status":"Rider Found", "name":rider[i].name, "gender":rider[i].gender, "phNo":rider[i].phNo, "Destination":passenger_route[j]},status=200)
-            print("Here")
-            return JsonResponse({"status":"Rider not found"},status=205)
+                            riders.append({"name":rider[i].name, "gender":rider[i].gender, "destination":passenger_route[j], "rating":rider.rating})
+            if riders==[]:
+                return JsonResponse(status=205)
+            return JsonResponse(riders,status=200)
         except:
             return JsonResponse({"status":"Rider not found"},status=205)
+        
+
+@csrf_exempt
+def req_rider(request):
+    if request.method == "POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            mail = data.get("mail")
+            ridermail = data.get('ridermail')
+            rider = ActiveUser.objects.get(mail = ridermail)
+            corider = SignUP.objects.get(mail=mail)
+            RiderAccept.objects.create(corider_name=corider.name, corider_mail=mail, corider_gender=corider.gender, corider_phNo=corider.phNo, corider_gate=data.get("gate"),corider_dest=data.get("destination"),rider_mail=rider.mail)
+        except:
+            return JsonResponse({"status":"error"}, status =205)
+        
+@csrf_exempt
+def rider_ride_req(request):
+    if request.method == "POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            mail = data.get("mail")
+            ride = RiderAccept.objects.get(rider_mail=mail)
+            return JsonResponse({"gender":ride.corider_gender, "name":ride.corider_name, "phNo":ride.corider_phNo, "gate":ride.corider_gate, "destination":ride.corider_dest}, status=200)
+        except:
+            return JsonResponse({"status":"No Ride"},status=205)
+        
+@csrf_exempt
+def rider_accept_ride(request):
+    if request.method=="POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            rider_mail = data.get("rider_mail")
+            rider = SignUP.objects.get(mail=rider_mail)
+            corider_mail = data.get("corider_mail")
+            corider = SignUP.objects.get(mail=corider_mail)
+            RideStarted.objects.create(rider_mail=rider_mail, corider_mail=corider_mail, rider_phNo = rider.phNo, corider_phNo=corider.phNo)
+            gate = RiderAccept.objects.get(rider_mail).corider_gate
+            return JsonResponse({"status":"Ride Started", "rider_phNo":rider.phNo, "corider_phNo":corider.phNo, "gate":gate, "rating":rider.rating}, status = 200)
+        except:
+            return JsonResponse({"status":"error"},status=205)
+
+@csrf_exempt
+def ride_terminate(request):
+    if request.method=="POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            rider_mail = data.get("rider_mail")
+            corider_mail = data.get("corider_mail")
+            x = RiderAccept.objects.get(rider_mail=rider_mail)
+            x.delete()
+            rider = SignUP.objects.get(rider_mail)
+            rider = rider.append(['Rider',corider_mail, datetime.datetime])
+            return JsonResponse({"status":"Ride Completed"},status=200)
+        except:
+            return JsonResponse({"status":"error"},status=205)
