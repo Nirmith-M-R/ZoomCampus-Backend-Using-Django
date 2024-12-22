@@ -12,7 +12,7 @@ class SignUP(models.Model):
     program = models.CharField(max_length=20)
     route = models.JSONField()
     rating = models.FloatField(default=0)
-    rides = models.JSONField(default=[])
+    # rides = models.JSONField(default=[])
 
 class ActiveUser(models.Model):
     mail = models.CharField(max_length=30, primary_key=True)
