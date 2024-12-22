@@ -12,4 +12,5 @@ urlpatterns = [
     path('riderRideReq/', views.rider_ride_req),
     path('riderAcceptRide/',views.rider_accept_ride),
     path('rideTerminate/', views.ride_terminate),
+    path('profile/', views.profile),
 ]

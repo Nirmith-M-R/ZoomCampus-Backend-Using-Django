@@ -137,7 +137,7 @@ def request_ride(request):
             for j in range(len(passenger_route)-1,-1,-1):
                 for n in range(len(rider[i].route)-1,-1,-1):
                     if passenger_route[j].lower() == rider[i].route[n].lower():
-                        riders.append({"name":rider[i].name, "gender":rider[i].gender, "destination":passenger_route[j], })
+                        riders.append({"name":rider[i].name, "gender":rider[i].gender, "destination":passenger_route[j], "mail":rider[i].mail})
                         flag = True
                         break
                 if flag:
@@ -158,9 +158,11 @@ def req_rider(request):
             data = json.loads(data)
             mail = data.get("mail")
             ridermail = data.get('ridermail')
-            rider = ActiveUser.objects.get(mail = ridermail)
+            print(data)
+            rider = ActiveUser.objects.get(phNo = ridermail)
             corider = SignUP.objects.get(mail=mail)
-            RiderAccept.objects.create(corider_name=corider.name, corider_mail=mail, corider_gender=corider.gender, corider_phNo=corider.phNo, corider_gate=data.get("gate"),corider_dest=data.get("destination"),rider_mail=rider.mail)
+            x =RiderAccept(corider_name=corider.name, corider_mail=mail, corider_gender=corider.gender, corider_phNo=corider.phNo, corider_gate=data.get("gate"),corider_dest=data.get("destination"),rider_mail=rider.mail)
+            x.save()
         except:
             return JsonResponse({"status":"error"}, status =205)
         
@@ -210,31 +212,16 @@ def ride_terminate(request):
             return JsonResponse({"status":"Ride Completed"},status=200)
         except:
             return JsonResponse({"status":"error"},status=205)
-        
-@csrf_exempt
-def getlocation(request):
-    if request.method == "POST":
-        try:
-            # Parse JSON request body
-            data = json.loads(request.body.decode('utf-8'))
-            
-            # Extract source, destination, and checkpoints
-            source = data.get('source')  # Example: "1600 Amphitheatre Parkway, Mountain View, CA"
-            destination = data.get('destination')  # Example: "1 Infinite Loop, Cupertino, CA"
-            checkpoints = data.get('checkpoints')  # Example: ["Checkpoint1", "Checkpoint2"]
-            
-            # Validate data
-            if not source or not destination:
-                return JsonResponse({'error': 'Source and destination are required.'}, status=400)
-            
-            # Successful response
-            return JsonResponse({
-                'source': source,
-                'destination': destination,
-                'checkpoints': checkpoints,
-                'message': 'Locations received successfully'
-            }, status=200)
-        
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON data.'}, status=400)
 
+@csrf_exempt
+def profile(request):
+    if request.method=="POST":
+        try:
+            data = request.body.decode('utf-8')
+            data = json.loads(data)
+            mail = data.get("mail")
+            x = SignUP.objects.get(mail=mail)
+            print(x)
+            return JsonResponse({"name":x.name, "mail":x.mail, "phNo":x.phNo},status=200)
+        except:
+            return JsonResponse({"status":"error"},status=205)
